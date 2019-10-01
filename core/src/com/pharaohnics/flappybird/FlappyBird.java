@@ -20,8 +20,10 @@ public class FlappyBird extends ApplicationAdapter {
 	private Texture fundo;
 	private Texture canoTopoMaior;
 	private Texture canoBaixoMaior;
+	private Texture gameOver;
 	private Random numeroRandomico;
 	private BitmapFont fonte;
+	private BitmapFont mensagem;
 	private Circle passaroCirculo;
 	private Rectangle retanguloCanoTopo;
 	private Rectangle retanguloCanoBaixo;
@@ -53,15 +55,24 @@ public class FlappyBird extends ApplicationAdapter {
 		//Cria o SpriteBatch com o nome de batch
 		batch = new SpriteBatch();
 
+		//Cria as formas para configurar as colisôes
 		passaroCirculo = new Circle();
-		//retanguloCanoTopo = new Rectangle();
-		//retanguloCanoBaixo = new Rectangle();
+		retanguloCanoTopo = new Rectangle();
+		retanguloCanoBaixo = new Rectangle();
+
 		//shape = new ShapeRenderer();
 
-		//Cria um BitmapFont , setando a cor e o tamanho da fonte
+		//Cria um BitmapFont , setando a cor e o tamanho da fonte do Placar
 		fonte = new BitmapFont(); // cria o BitmapFont com o nome de fonte
 		fonte.setColor(Color.WHITE); // seta a cor da fonte como branca
 		fonte.getData().scale(6); // seta o tamanho da fonte como 6
+
+		//Cria um BitmapFont , setando a cor e o tamanho da fonte da mensagem reinicio de jogo
+		mensagem = new BitmapFont();
+		mensagem.setColor(Color.WHITE);
+		mensagem.getData().scale(3);
+
+
 
 		//Cria e define as imagens para o passaro
 		passaros  = new Texture[3];
@@ -76,10 +87,14 @@ public class FlappyBird extends ApplicationAdapter {
 		canoBaixoMaior = new Texture("cano_baixo_maior.png");
 		canoTopoMaior = new Texture("cano_topo_maior.png");
 
+		//Cria Textura Game over
+		gameOver = new Texture("game_over.png");
+
 
 		//Recebe nos atributos a altura e largura da tela
 		larguraDispositivo 	= Gdx.graphics.getWidth();
 		alturaDispositivo 	= Gdx.graphics.getHeight();
+
 		posicaoVerticalInicial = alturaDispositivo / 2;
 		posicaoMovimentoCanoHorizontal = larguraDispositivo;
 		espacoEntreCanos = 300;
@@ -95,23 +110,22 @@ public class FlappyBird extends ApplicationAdapter {
 		if(estadoJogo == 0){
 			if(Gdx.input.justTouched())
 				estadoJogo = 1;
-		}else {//Iniciado
+		}else {// Jogo Iniciado
 
 			velocidadeQueda++;
 			//Verifica se o passaro passou do ponto inicial vertical ou se a tela foi pressionada
 			if (posicaoVerticalInicial > 0 || velocidadeQueda < 0)
 				posicaoVerticalInicial -= velocidadeQueda;
 
-			if (estadoJogo == 1){
+			if (estadoJogo == 1){// Se o estador for 1 executa o jogo
 				posicaoMovimentoCanoHorizontal -= deltaTime * 200;
 				if (Gdx.input.justTouched())
 					velocidadeQueda = -15;
 
-
 				//Verifica se o cano saiu inteiramente da tela
 				if (posicaoMovimentoCanoHorizontal < -canoTopoMaior.getWidth()) {
 					posicaoMovimentoCanoHorizontal = larguraDispositivo;
-					alturaEntreCanosRandomica = numeroRandomico.nextInt(450) - 225;
+					alturaEntreCanosRandomica = numeroRandomico.nextInt(400) - 200;
 					marcouPonto = false; // marcouPonto recebe false no momento que os canos sao crianos no inicio da tela, para marcar a pontuaçao
 				}
 
@@ -123,6 +137,16 @@ public class FlappyBird extends ApplicationAdapter {
 					}
 				}
 
+			}else{//Game Over
+				if (Gdx.input.justTouched()){
+					estadoJogo 		= 0;
+					pontuacao 		= 0;
+					velocidadeQueda = 0;
+					marcouPonto = false;
+					posicaoVerticalInicial 			= alturaDispositivo / 2;
+					posicaoMovimentoCanoHorizontal 	= larguraDispositivo;
+
+				}
 			}
 
 		}
@@ -132,29 +156,39 @@ public class FlappyBird extends ApplicationAdapter {
 
 		batch.draw(fundo,0,0, larguraDispositivo, alturaDispositivo );
 
-		batch.draw(canoTopoMaior,posicaoMovimentoCanoHorizontal , alturaDispositivo /2 + espacoEntreCanos /2 + alturaEntreCanosRandomica );
-		batch.draw(canoBaixoMaior,posicaoMovimentoCanoHorizontal , alturaDispositivo /2 - canoBaixoMaior.getHeight() - espacoEntreCanos /2 + alturaEntreCanosRandomica);
+		batch.draw(canoTopoMaior , posicaoMovimentoCanoHorizontal , alturaDispositivo /2 + espacoEntreCanos /2 + alturaEntreCanosRandomica );
+		batch.draw(canoBaixoMaior , posicaoMovimentoCanoHorizontal , alturaDispositivo /2 - canoBaixoMaior.getHeight() - espacoEntreCanos /2 + alturaEntreCanosRandomica);
 		batch.draw(passaros[(int) variacaoPassaro], 120, posicaoVerticalInicial );
 		fonte.draw(batch , String.valueOf(pontuacao),larguraDispositivo / 2 , alturaDispositivo -50 );
 
+		if (estadoJogo == 2){
+			batch.draw(gameOver , larguraDispositivo / 2 - gameOver.getWidth() / 2 , alturaDispositivo / 2);
+			mensagem.draw(batch,"Toque para reiniciar",larguraDispositivo  / 4 ,alturaDispositivo / 2 - gameOver.getHeight() / 2);
+		}
+
 		batch.end();	//Final do batch
+
 		//Cria um shape para o passaro do tipo Circulo
 		passaroCirculo.set(120 + passaros[0].getWidth() / 2 , posicaoVerticalInicial + passaros[0].getHeight() / 2 , passaros[0].getWidth() / 2 );
+
 		//Cria um shape para os canos Topo e Baixo
-		retanguloCanoBaixo = new Rectangle(
+		retanguloCanoBaixo.set(
 				posicaoMovimentoCanoHorizontal,alturaDispositivo /2 - canoBaixoMaior.getHeight() - espacoEntreCanos /2 + alturaEntreCanosRandomica,
 				canoBaixoMaior.getWidth(),canoBaixoMaior.getHeight()
 		);
-		retanguloCanoTopo = new Rectangle(
+
+		retanguloCanoTopo.set(
 				posicaoMovimentoCanoHorizontal,alturaDispositivo /2 + espacoEntreCanos /2 + alturaEntreCanosRandomica,
 				canoTopoMaior.getWidth(),canoTopoMaior.getHeight()
 		);
 
 		//Teste de Colisao
-		if(Intersector.overlaps(passaroCirculo , retanguloCanoBaixo) || Intersector.overlaps(passaroCirculo , retanguloCanoTopo)){
-			estadoJogo = 2;
+		if(Intersector.overlaps(passaroCirculo , retanguloCanoBaixo) || Intersector.overlaps(passaroCirculo , retanguloCanoTopo)
+								|| posicaoVerticalInicial <= 0 || posicaoVerticalInicial >= alturaDispositivo){
 
-			//Gdx.app.log("Colisao", "Houve Colisao");
+			estadoJogo = 2; //--> SETA o Estado do jogo Game Over
+
+
 		}
 
 		//Desenhar formas
@@ -167,6 +201,7 @@ public class FlappyBird extends ApplicationAdapter {
 
 		shape.end();*/
 
+		//Gdx.app.log("Colisao", "Houve Colisao");
 	}
 
 
